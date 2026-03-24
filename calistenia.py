@@ -7,31 +7,41 @@ from itertools import combinations
 
 
 
-
-matriz_ejericios = pd.read_csv('matrizEjercicios.csv',index_col=0)
-
-
-relaciones = matriz_ejericios.isna()
+matriz_ejericios = pd.read_csv('matrizEjercicios-full.csv',index_col=0)
 
 
+print(matriz_ejericios)
+relaciones = matriz_ejericios.isna() # Convierte la celdas vacias a TRUE y las celdas con numeros a FALSE
+
+print(relaciones)
 ejercicios_ordenados=[]
 
+print("Escribirendo relaciones")
+rSize = relaciones.size 
 while relaciones.size>0:
-
+    print(relaciones.size)
+    print(relaciones)
     ejercicios = relaciones.columns
-    relaciones2 = relaciones.all(axis=0)
+    relaciones2 = relaciones.all(axis=0) # devuelve una serie donde TRUE significa che todos son TRUE(otiginalmente vacio) y false significa que alguno es FALSE (El ejercicio tiene algun requisito)
 
 
-    ejercicios_ordenados.append(ejercicios[relaciones2])
+    ejercicios_ordenados.append(ejercicios[relaciones2]) # Agrego los ejericcios que por ahora no tienen ningun ejericios_requisitos
 
 
-    relaciones = relaciones.loc[~relaciones2,~relaciones2]
+    relaciones = relaciones.loc[~relaciones2,~relaciones2] # Me quedo solo con las filas y solumndas que que no puse en ejericicios
+    rSize_new = relaciones.size
+    if rSize == rSize_new:
+        print("La matriz de ejercicios no es consistente, hay un loop de ejercicios")
+        ejercicios_ordenados.append(relaciones.columns)
+        print(ejercicios_ordenados)
 
-
+        break
+    else: rSize=rSize_new
 
 ejercicios = matriz_ejericios.columns
 relaciones = matriz_ejericios.notna()
 
+print("Creando grafo")
 # Create a graph object
 G = nx.Graph()
 
