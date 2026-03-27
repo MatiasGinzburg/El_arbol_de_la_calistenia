@@ -95,5 +95,5 @@ if __name__ == "__main__":
     # Set the appearance theme
     ctk.set_appearance_mode("light")
     
-    app = MainApp("matrizEjercicios")
+    app = MainApp("matrizEjercicios-full")
     app.mainloop()
