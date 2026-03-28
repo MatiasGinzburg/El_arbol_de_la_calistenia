@@ -4,7 +4,7 @@ from matplotlib.widgets import Cursor
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import networkx as nx
 import textwrap
-
+from dag_manipulation.data_structure import get_dag_pos, get_untangled_dag_pos
 
 class GraphCanvas(ctk.CTkFrame):
     def __init__(self, master, on_node_selected=None, **kwargs):
@@ -78,37 +78,9 @@ class GraphCanvas(ctk.CTkFrame):
         self.ax.add_artist(self.annot)
         self.annot.set_visible(False)
 
-        # Old  Simply use the position os the original graph
-        #self.pos = nx.get_node_attributes(G, 'pos')
-
-        # New: Here i want to have some function that make teh graph looks better
-        # I this case i am using a spring layout but i can do better
-        manual_pos = nx.get_node_attributes(G, 'pos')
-
-        # We use spring_layout but seed it with your manual positions.
-        # k: Increase this value (0.1 to 1.0) to push nodes further apart.
-        # iterations: 50 is usually enough for a stable look.
-        if manual_pos:
-            # PROFESSIONAL FIX: Custom X-axis spreading
-            # We create a copy so we don't overwrite your original data
-            final_pos = {node: list(coords) for node, coords in manual_pos.items()}
-            
-            # Step A: Run the spring layout but DON'T fix the positions
-            # We use your manual_pos as the 'starting' point (pos=manual_pos)
-            # but we let the algorithm move them.
-            relaxed_pos = nx.spring_layout(G, pos=manual_pos, iterations=20, k=2.0)
-            
-            for node in final_pos:
-                # Step B: Keep your original Y (Vertical)
-                # But take the new X (Horizontal) from the spring layout
-                final_pos[node][0] = relaxed_pos[node][0]
-                final_pos[node][1] = manual_pos[node][1]*1.5 # LOCK THE Y
-            
-            self.pos = final_pos
-        else:
-            self.pos = nx.spring_layout(G, k=1.0)
-
-        ## End new
+        #self.pos = get_dag_pos(G)
+        self.pos = get_untangled_dag_pos(G)
+        
 
         wrapped_labels = {
             node: textwrap.fill(str(node), width=12) # Break lines every 12 chars
