@@ -4,7 +4,7 @@ from matplotlib.widgets import Cursor
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import networkx as nx
 import textwrap
-from dag_manipulation.data_structure import get_dag_pos, get_untangled_dag_pos
+from dag_manipulation import dag
 
 class GraphCanvas(ctk.CTkFrame):
     def __init__(self, master, on_node_selected=None, **kwargs):
@@ -78,8 +78,8 @@ class GraphCanvas(ctk.CTkFrame):
         self.ax.add_artist(self.annot)
         self.annot.set_visible(False)
 
-        #self.pos = get_dag_pos(G)
-        self.pos = get_untangled_dag_pos(G)
+        #self.pos = dag.get_pos(G)
+        self.pos = dag.get_untangled_pos(G)
         
 
         wrapped_labels = {
@@ -88,9 +88,16 @@ class GraphCanvas(ctk.CTkFrame):
         }
 
         # STEP 3: Draw Edges first so they are behind the nodes
+        # we select only the most important edges
+        TR_edges = dag.get_closest_generation_edges(G)
+
         nx.draw_networkx_edges(
-            G, self.pos, ax=self.ax, 
-            edge_color='#555555', width=2
+            G,
+            self.pos,
+            edgelist=TR_edges,
+            ax=self.ax, 
+            edge_color='#555555',
+            width=2
         )
 
         # STEP 4: Draw Nodes and STORE them in self.node_collection
