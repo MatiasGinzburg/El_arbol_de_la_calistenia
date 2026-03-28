@@ -4,30 +4,58 @@ import json
 from networkx.readwrite import json_graph
 from views.templates.full_view import FullView
 from views.templates.detail_view import DetailView
+import os
+import shutil
 
 class MainApp(ctk.CTk):
-    def __init__(self,filename):
+    def __init__(self):
         super().__init__()
 
         # 1. Window Configuration
         self.title("El Arbol de la Calistenia")
         self.geometry("1100x800")
         self.configure(fg_color="white") 
-
-        # 2. Data Initialization
-        self.full_graph = self.setup_initial_data(filename)
         
         self.history = []  # This stores the sequence of node_ids visited
 
-        # 3. State Management
+        self.current_user = None
+        self.full_graph = None
         self.current_view = None
+
+        # Start with the Login Screen
+        self.show_login_screen()
+
+
+    def login_user(self, username):
+        if not username: return
         
-        # Start by showing the Full Graph
+        self.current_user = username
+        # This is the full path to the user's specific file
+        user_path = f"Data/users/{username}.json"
+        default_path = "Data/matrizEjercicios-full.json"
+
+        os.makedirs("Data/users", exist_ok=True)
+
+        if not os.path.exists(user_path):
+            # If new user, copy from the main Data folder to the users folder
+            shutil.copy(default_path, user_path)
+            print(f"Created new profile for {username}")
+
+        # Pass the full path we just built
+        self.full_graph = self.setup_initial_data(user_path)
         self.show_full_view()
 
-    def setup_initial_data(self,filename):
-        """Creates the master Directed Graph with positions and info."""
-        with open(f"Data/{filename}.json", "r") as f:
+    def save_user_data(self):
+        """Call this whenever a node is edited!"""
+        if self.current_user and self.full_graph:
+            filename = f"Data/users/{self.current_user}.json"
+            data = json_graph.node_link_data(self.full_graph)
+            with open(filename, "w") as f:
+                json.dump(data, f, indent=4)
+
+    def setup_initial_data(self, path):
+        """Creates the master Directed Graph from a provided path."""
+        with open(path, "r") as f: # Removed f"Data/{filename}.json"
             data = json.load(f)
             G = json_graph.node_link_graph(data)
         return G
@@ -58,6 +86,12 @@ class MainApp(ctk.CTk):
             self.history.append(self.current_view.node_id)
 
         self._render_detail(node_id)
+
+    def show_login_screen(self):
+        self.clear_current_view()
+        from views.templates.login_view import LoginView
+        self.current_view = LoginView(master=self, on_login=self.login_user)
+        self.current_view.pack(fill="both", expand=True)
 
     def go_back(self):
         """The logic for the Back button."""
@@ -95,5 +129,5 @@ if __name__ == "__main__":
     # Set the appearance theme
     ctk.set_appearance_mode("light")
     
-    app = MainApp("matrizEjercicios-full")
+    app = MainApp()
     app.mainloop()
