@@ -4,6 +4,7 @@ import json
 from networkx.readwrite import json_graph
 from views.templates.full_view import FullView
 from views.templates.detail_view import DetailView
+from views.templates.login_view import LoginView
 import os
 import shutil
 
@@ -87,9 +88,10 @@ class MainApp(ctk.CTk):
 
         self._render_detail(node_id)
 
+
+
     def show_login_screen(self):
         self.clear_current_view()
-        from views.templates.login_view import LoginView
         self.current_view = LoginView(master=self, on_login=self.login_user)
         self.current_view.pack(fill="both", expand=True)
 
@@ -103,7 +105,7 @@ class MainApp(ctk.CTk):
             previous_node = self.history.pop()
             self._render_detail(previous_node)
 
-    def _render_detail(self, node_id):
+    def _render_detail(self, node_id): #old
         """Internal helper to actually draw the DetailView."""
         self.clear_current_view()
         
@@ -123,6 +125,43 @@ class MainApp(ctk.CTk):
         )
         self.current_view.pack(fill="both", expand=True)
 
+    def update_node_reps(self, node_id, new_reps):
+        """Updates the graph data and saves to disk."""
+        # 1. Update the in-memory graph
+        if node_id in self.full_graph.nodes:
+            self.full_graph.nodes[node_id]['reps'] = new_reps
+            
+            # 2. Persist to JSON
+            self.save_user_data()
+            print(f"Successfully updated {node_id} to {new_reps} reps.")
+            
+            # 3. Optional: Refresh the current view to show the saved data
+            # (Though in this UI, the entry already shows it)
+
+    def _render_detail(self, node_id):
+        """Internal helper to actually draw the DetailView."""
+        self.clear_current_view()
+        
+        # 1. LOGIC: Get the ancestors and subgraph
+        ancestors = nx.ancestors(self.full_graph, node_id)
+        nodes_to_keep = {node_id} | ancestors
+        sub_graph = self.full_graph.subgraph(nodes_to_keep)
+        
+
+        node_data = self.full_graph.nodes[node_id]
+
+        # 3. UI: Create the view and pass the variables we just defined
+        self.current_view = DetailView(
+            master=self,
+            node_id=node_id,
+            node_data=node_data,        
+            sub_graph=sub_graph,
+            on_back_click=self.go_back,
+            on_node_click=self.show_detail_view,
+            on_save_reps=self.update_node_reps  
+        )
+        self.current_view.pack(fill="both", expand=True)
+
     
 
 if __name__ == "__main__":
@@ -130,4 +169,5 @@ if __name__ == "__main__":
     ctk.set_appearance_mode("light")
     
     app = MainApp()
+
     app.mainloop()

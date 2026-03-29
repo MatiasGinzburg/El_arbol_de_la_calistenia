@@ -7,11 +7,11 @@ import textwrap
 from dag_manipulation import dag
 
 class GraphCanvas(ctk.CTkFrame):
-    def __init__(self, master, on_node_selected=None, **kwargs):
+    def __init__(self, master, on_node_click=None, **kwargs):
         super().__init__(master, **kwargs)
         
         # . Store it as a class variable so you can use it for clicks later
-        self.on_node_selected = on_node_selected
+        self.on_node_click = on_node_click
 
         # . Create the Matplotlib Figure
         # facecolor matches a typical dark theme background
@@ -48,8 +48,7 @@ class GraphCanvas(ctk.CTkFrame):
         self.node_collection = None
         self.pos = None
         self.G = None
-
-        #New 
+ 
         self.toolbar = NavigationToolbar2Tk(self.canvas, self)
         self.toolbar.update()
         self.toolbar.pack(side="bottom", fill="x")
@@ -63,10 +62,10 @@ class GraphCanvas(ctk.CTkFrame):
                 # Get the node ID from the click index
                 node_idx = list(self.G.nodes())[ind["ind"][0]]
                 # Trigger the function we received from MainApp
-                if self.on_node_selected:
-                    self.on_node_selected(node_idx)
+                if self.on_node_click:
+                    self.on_node_click(node_idx)
 
-    def display_graph(self, G):
+    def display_graph(self, G, node_colors=None):
         """Renders the NetworkX graph G using its 'pos' attributes."""
         self.G = G
         
@@ -100,11 +99,15 @@ class GraphCanvas(ctk.CTkFrame):
             width=2
         )
 
+        # If no colors are provided, default to blue
+        if node_colors is None:
+            node_colors = ['#1fb6ff'] * len(G.nodes())
+
         # STEP 4: Draw Nodes and STORE them in self.node_collection
         # Do NOT call self.ax.clear() after this!
         self.node_collection = nx.draw_networkx_nodes(
             G, self.pos, ax=self.ax, 
-            node_color='blue',  
+            node_color=node_colors,  
             node_size=4000,
             node_shape="s" # Square
         )

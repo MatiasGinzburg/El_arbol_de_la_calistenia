@@ -1,5 +1,7 @@
 import customtkinter as ctk
 from views.components.graph_canvas import GraphCanvas
+from dag_manipulation.dag import assign_colors_from_atribute # new 
+
 
 class FullView(ctk.CTkFrame):
     def __init__(self, master, G, on_node_click, **kwargs):
@@ -8,6 +10,8 @@ class FullView(ctk.CTkFrame):
         
         self.on_node_click = on_node_click # Store the callback from main.py
         self.G = G
+        #New
+        self.node_colors = assign_colors_from_atribute(G, atribute='reps',v_min=0, color_low='red',color_standard='blue')
 
         # 1. Header / Welcome Section
         self.header_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -30,20 +34,29 @@ class FullView(ctk.CTkFrame):
         self.subtitle_label.pack(padx=40, anchor="w")
 
         # 2. The Graph Section
-        # We pass 'self.handle_click' as the internal callback for the canvas
         self.canvas = GraphCanvas( 
             master=self, 
-            on_node_selected=self.handle_click
+            on_node_click=self.on_node_click 
         )
         self.canvas.pack(fill="both", expand=True, padx=20, pady=20)
 
         # 3. Initial Render
-        self.canvas.display_graph(self.G)
+        self.canvas.display_graph(self.G, self.node_colors)
 
-    def handle_click(self, node_id):
-        """
-        This is an internal middle-man. 
-        It receives the click from the Canvas and sends it up to MainApp.
-        """
-        if self.on_node_click:
-            self.on_node_click(node_id)
+
+    def update_display(self): # old
+        colors = []
+        for node in self.G.nodes():
+            reps = int(self.G.nodes[node].get('reps', 0))
+            colors.append("#1fb6ff" if reps > 0 else "#ff4b4b") # Blue vs Red
+        
+        self.canvas.display_graph(self.G, node_colors=colors)
+
+    def set_colors(self): # New
+        self.colors = []
+        for node in self.G.nodes():
+            reps = int(self.G.nodes[node].get('reps', 0))
+            self.colors.append("#1fb6ff" if reps > 0 else "#ff4b4b") # Blue vs Red
+        
+
+
